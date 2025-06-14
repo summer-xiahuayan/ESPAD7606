@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "iconv-lite": "^0.6.3",
+    "ws": "^8.18.2"
+  }
+}

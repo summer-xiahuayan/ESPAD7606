@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      - name: arduino lint action
+        uses: arduino/arduino-lint-action@v1.0.1
+        with:
+          verbose: true
+      
+      - name: Update my-file.json description
+        uses: jossef/action-set-json-field@v2
+        with:
+          file: library.json
+          field: version
+          value: 1.${{ github.run_number }}.0
+
+      - name: platform IO publish
+        uses: bojit/platformio-publish@main
+        with:
+          token: ${{ secrets.PLATFORMIO_TOKEN }}
+        
+      - name: Github Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        uses: elgohr/Github-Release-Action@v5
+        with:
+          title: 1.${{ github.run_number }}.0

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESPAD7606八通道电压数据监控系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 100%;
+            margin: 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .header {
+            text-align: center;
+            background-color: #4a6fa5;
+            color: white;
+            padding: 12px;
+            height: 30px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background-color: white;
+            padding: 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group {
+            display: flex;
+            font-size: 12px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        input[type="text"] {
+            padding: 4px;
+            width: 100px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        button {
+            padding: 3px 8px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 12spx;
+        }
+
+        .data-display {
+            display: flex;
+            flex-wrap: nowrap;  /* 强制元素在一行显示 */
+            width: 100%;        /* 占满父容器宽度 */
+            gap: 12px;
+            overflow-x: auto;   /* 超出宽度时显示水平滚动条 */
+        }
+
+        .channel-card {
+            flex: 1 1 calc(25% - 12px);
+            /* 每行显示4个卡片 */
+            background-color: white;
+            padding: 8px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 180px;
+        }
+
+        .channel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .channel-name {
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .channel-unit{
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .channel-value {
+            font-size: 12px;
+            font-weight: bold;
+            color: #4a6fa5;
+            background-color: transparent;
+        }
+
+        .chart-container {
+            font-size: 12px;
+            text-align: center;  /* 水平居中 */
+            margin: 0 auto;  /* 确保没有额外的上下边距，并水平居中 */
+            width: 100%;
+            background-color: white;
+            padding: 6px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-top: 1px;
+        }
+
+        .chart-wrapper {
+            height: 250px;
+            /* 减小图表高度 */
+        }
+        
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .online {
+            background-color: #4CAF50;
+        }
+
+        .offline {
+            background-color: #F44336;
+        }
+
+        .log-container {
+            background-color: white;
+            padding: 5px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            height: 50px;
+            /* 减小日志容器高度 */
+            overflow-y: auto;
+            font-size: 11px;
+            border: 1px solid #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ESP_AD7606八通道电压数据监控系统</h1>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-group">
+                <label for="host">服务器地址:</label>
+                <input type="text" id="host" value="127.0.0.1">
+            </div>
+            <div class="control-group">
+                <label for="port">端口号:</label>
+                <input type="text" id="port" value="1234">
+            </div>
+            <div class="control-group">
+                <button id="startServerBtn">启动服务器</button>
+                <button id="stopServerBtn" disabled>停止服务器</button>
+                <span id="statusIndicator" class="status-indicator offline"></span>
+                <span id="statusText">服务器未运行</span>
+            </div>
+            <div class="control-group">
+                <button id="startLoggingBtn" disabled>开始记录</button>
+                <button id="stopLoggingBtn" disabled>停止记录</button>
+                <button id="downloadCsvBtn" disabled>下载CSV</button>
+            </div>
+        </div>
+
+        <div class="data-display">
+            <!-- 通道数据卡片将通过JS动态生成 -->
+        </div>
+
+        <div class="chart-container">
+            <h3>电压数据趋势图</h3>
+            <div class="chart-wrapper">
+                <canvas id="dataChart"></canvas>
+            </div>
+        </div>
+
+        <div class="log-container" id="logContainer">
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let socket = null;
+        let isLogging = false;
+        let chart = null;
+        const channelCount = 8;
+        const channelData = Array(channelCount).fill(0).map(() => []);
+        const maxDataPoints = 100;
+        let serverStatus = false;
+        let currentLogFile = null; // 当前日志文件名
+
+        // DOM元素
+        const startServerBtn = document.getElementById('startServerBtn');
+        const stopServerBtn = document.getElementById('stopServerBtn');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const startLoggingBtn = document.getElementById('startLoggingBtn');
+        const stopLoggingBtn = document.getElementById('stopLoggingBtn');
+        const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+        const logContainer = document.getElementById('logContainer');
+        const dataDisplay = document.querySelector('.data-display');
+
+        // 初始化通道显示卡片
+        function initChannelCards() {
+            dataDisplay.innerHTML = '';
+            for (let i = 0; i < channelCount; i++) {
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.innerHTML = `
+                    <div class="channel-header">
+                        <div class="channel-name">通道 ${i + 1}</div>
+                        <div class="channel-unit">V</div>
+                    </div>
+                    <div class="channel-value" id="channelValue${i}">0.00</div>
+                `;
+                dataDisplay.appendChild(card);
+            }
+        }
+
+        // 初始化图表
+        function initChart() {
+            const ctx = document.getElementById('dataChart').getContext('2d');
+            const labels = Array(maxDataPoints).fill('');
+
+            const config = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: Array(channelCount).fill().map((_, i) => ({
+                        label: `通道 ${i + 1}`,
+                        data: Array(maxDataPoints).fill(0),
+                        borderColor: getRandomColor(i),
+                        backgroundColor: `rgba(${getRandomColor(i)}, 0.1)`,
+                        borderWidth: 1,
+                        fill: false,
+                        tension: 0.1,
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '电压 (V)',
+                                font: { size: 12 }
+                            },
+                            min: 0,
+                            max: 5,
+                            ticks: { font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { font: { size: 10 } }
+                        }
+                    },
+                    animation: {
+                        duration: 0
+                    }
+                }
+            };
+
+            chart = new Chart(ctx, config);
+        }
+
+        // 生成随机颜色
+        function getRandomColor(index) {
+            const hue = 360 / channelCount * index;
+            return `hsl(${hue}, 70%, 60%)`;
+        }
+
+        // 记录日志
+        function log(message) {
+            const now = new Date();
+            const timestamp = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const logLine = `<div>[${timestamp}] ${message}</div>`;
+            logContainer.innerHTML += logLine;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // 启动服务器
+        startServerBtn.addEventListener('click', () => {
+            const host = document.getElementById('host').value;
+            const port = parseInt(document.getElementById('port').value);
+
+            if (isNaN(port) || port <= 0 || port > 65535) {
+                log('错误：端口号必须是1-65535之间的数字');
+                return;
+            }
+
+            try {
+                socket = new WebSocket(`ws://${host}:${port}`);
+
+                socket.onopen = () => {
+                    log('服务器已启动并等待ESP32连接');
+                    statusIndicator.className = 'status-indicator online';
+                    statusText.textContent = '服务器运行中';
+                    startServerBtn.disabled = true;
+                    stopServerBtn.disabled = false;
+                    serverStatus = true;
+
+                    // 发送命令确认服务器状态
+                    socket.send('GET_STATUS');
+                };
+
+                socket.onmessage = (event) => {
+                    try {
+                        const message = event.data.trim();
+
+                        // 处理数据消息
+                        if (message.startsWith('DATA:')) {
+                            const dataStr = message.substring(5);
+                            const data = dataStr.split(',').map(Number);
+                            if (data.length === channelCount) {
+                                updateDisplay(data);
+                            }
+                        }
+                        // 处理服务器状态消息
+                        else if (message.startsWith('STATUS:')) {
+                            const status = message.substring(7);
+                            log(`服务器状态: ${status}`);
+
+                            if (status === 'ESP_CONNECTED') {
+                                startLoggingBtn.disabled = false;
+                                log('ESP32已连接');
+                            } else if (status === 'WAITING_FOR_ESP') {
+                                log('等待ESP32连接...');
+                            } else if (status.startsWith('LOGGING_STARTED:')) {
+                                currentLogFile = status.substring(16);
+                                log(`开始记录数据到： ${currentLogFile}`);
+                                downloadCsvBtn.disabled = false;
+                            } else if (status === 'LOGGING_STOPPED') {
+                                log('记录数据已停止');
+                                downloadCsvBtn.disabled = false;
+                            } else if (status === 'NO_LOG_FILE') {
+                                log('没有可下载的数据');
+                                downloadCsvBtn.disabled = false;
+                            }
+                        } else if (message.startsWith('CSV_DATA:')) {
+                            const csvContent = message.substring(9);
+                            downloadCsv(csvContent, currentLogFile);
+                            currentLogFile = null;
+                        }
+                        // 处理其他消息
+                        else {
+                            log(message);
+                        }
+                    } catch (error) {
+                        log(`错误：处理消息时出错 - ${error.message}`);
+                    }
+                };
+
+                socket.onclose = () => {
+                    log('服务器已停止');
+                    statusIndicator.className = 'status-indicator offline';
+                    statusText.textContent = '服务器未运行';
+                    startServerBtn.disabled = false;
+                    stopServerBtn.disabled = true;
+                    startLoggingBtn.disabled = true;
+                    stopLoggingBtn.disabled = true;
+                    downloadCsvBtn.disabled = true;
+                    currentLogFile = null;
+                    socket = null;
+                };
+
+                socket.onerror = (error) => {
+                    log(`错误：连接服务器时出错 - ${error.message}`);
+                    statusIndicator.className = 'status-indicator offline';
+                    statusText.textContent = '连接错误';
+                    serverStatus = false;
+                    socket = null;
+                };
+            } catch (error) {
+                log(`错误：无法连接到服务器 - ${error.message}`);
+            }
+        });
+
+        // 停止服务器
+        stopServerBtn.addEventListener('click', () => {
+            if (socket) {
+                socket.send('STOP_SERVER');
+                socket.close();
+            }
+        });
+
+        // 开始记录数据
+        startLoggingBtn.addEventListener('click', () => {
+            isLogging = true;
+            startLoggingBtn.disabled = true;
+            stopLoggingBtn.disabled = false;
+            log('开始记录数据');
+
+            if (socket) {
+                socket.send('START_LOGGING');
+            }
+        });
+
+        // 停止记录数据
+        stopLoggingBtn.addEventListener('click', () => {
+            isLogging = false;
+            startLoggingBtn.disabled = false;
+            stopLoggingBtn.disabled = true;
+            log('已停止记录数据');
+
+            if (socket) {
+                socket.send('STOP_LOGGING');
+            }
+        });
+
+        // 下载CSV文件（从服务器获取）
+        downloadCsvBtn.addEventListener('click', () => {
+            if (!currentLogFile) {
+                log('没有可下载的数据文件');
+                return;
+            }
+
+            log(`请求下载文件: ${currentLogFile}`);
+            if (socket) {
+                socket.send(`DOWNLOAD_CSV:${currentLogFile}`);
+            }
+        });
+
+        // 处理服务器发送的CSV数据
+        socket && socket.on('message', (event) => {
+            const message = event.data;
+            if (message.startsWith('CSV_DATA:')) {
+                const csvContent = message.substring(9);
+                downloadCsv(csvContent, currentLogFile);
+            }
+        });
+
+        function downloadCsv(content, filename) {
+            // 添加UTF-8 BOM头
+            const contentWithBOM = '\uFEFF' + content;
+            // 确保使用正确的MIME类型和编码
+            const blob = new Blob([contentWithBOM], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename.endsWith('.csv') ? filename : filename + '.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // 释放资源
+            log(`已下载CSV文件: ${filename}`);
+        }
+
+        // 更新显示数据
+        function updateDisplay(data) {
+            for (let i = 0; i < channelCount; i++) {
+                const value = data[i].toFixed(2);
+                document.getElementById(`channelValue${i}`).textContent = value;
+
+                channelData[i].push(data[i]);
+                if (channelData[i].length > maxDataPoints) {
+                    channelData[i].shift();
+                }
+
+                chart.data.datasets[i].data = channelData[i];
+            }
+            chart.update();
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initChannelCards();
+            initChart();
+            log('系统初始化完成，请启动服务器');
+        });
+    </script>
+</body>
+
+</html>
