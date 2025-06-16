@@ -101,10 +101,15 @@ const tcpServer = net.createServer((socket) => {
 const wss = new WebSocket.Server({ port: WS_PORT });
 const iconv = require('iconv-lite');
 
-wss.on('connection', (ws) => {
-    console.log('网页客户端已连接');
+wss.on('connection', (ws, req) => {
+    // 获取客户端IP和端口
+    const clientIp = req.socket.remoteAddress;
+    const clientPort = req.socket.remotePort;
+
+    console.log(`网页客户端已连接: ${clientIp}:${clientPort}`);
     wsClients.add(ws);
 
+    // 发送初始状态
     ws.send(`STATUS:${espClient ? 'ESP_CONNECTED' : 'WAITING_FOR_ESP'}`);
 
     ws.on('message', (message) => {
@@ -117,17 +122,22 @@ wss.on('connection', (ws) => {
         } else if (msg === 'STOP_LOGGING') {
             stopLogging();
         } else if (msg === 'STOP_SERVER') {
-            stopServer();
+            // 只关闭发送此消息的客户端连接，并打印客户端信息
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.close(1000, '客户端请求断开');
+                console.log(`客户端 ${clientIp}:${clientPort} 已断开连接，服务器继续运行`);
+                wsClients.delete(ws); // 从集合中移除断开的客户端
+            }
         } else if (msg.startsWith('DOWNLOAD_CSV:')) {
             const filename = msg.substring(13);
-            console.log(filename);
+            console.log(`客户端 ${clientIp}:${clientPort} 请求下载文件: ${filename}`);
             downloadCsv(ws, filename);
         }
     });
 
     ws.on('close', () => {
-        console.log('网页客户端已断开连接');
-        wsClients.delete(ws);
+        console.log(`客户端 ${clientIp}:${clientPort} 连接已关闭`);
+        wsClients.delete(ws); // 确保从集合中移除断开的客户端
     });
 });
 
@@ -211,15 +221,36 @@ function downloadCsv(ws, filename) {
     }
 }
 
-// 停止服务器
+// 断开前端连接（WebSocket客户端），但保持服务器运行
+function disconnectFrontend() {
+    stopLogging();
+
+    // 关闭所有WebSocket客户端连接，但保留WebSocket服务器
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.close(1000, '正常断开');
+        }
+    });
+
+    console.log('所有前端连接已断开，服务器继续运行');
+}
+
+// 停止服务器（保持不变，用于完全停止服务）
 function stopServer() {
     stopLogging();
+
+    // 关闭ESP客户端连接
     if (espClient) {
         espClient.destroy();
         espClient = null;
     }
 
-    tcpServer.close(() => console.log('TCP服务器已关闭'));
+    // 关闭TCP服务器
+    if (tcpServer) {
+        tcpServer.close(() => console.log('TCP服务器已关闭'));
+    }
+
+    // 关闭所有WebSocket客户端并停止WebSocket服务器
     wss.clients.forEach(client => client.close());
     wss.close(() => console.log('WebSocket服务器已关闭'));
 }

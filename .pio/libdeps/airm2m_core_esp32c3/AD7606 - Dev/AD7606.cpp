@@ -912,7 +912,7 @@ AD7606_SPI::AD7606_SPI(int MISO, int SCK, int CS, int CONVSTA, int CONVSTB, int 
 	digitalWrite(_RESET, 0);
 	SPI.begin(SCK,MISO,MOSI,CS);
 	SPI.setBitOrder(SPI_MSBFIRST);
-	SPI.setClockDivider(SPI_CLOCK_DIV2);
+	SPI.setClockDivider(SPI_CLOCK_DIV128);
 	SPI.setDataMode(SPI_MODE0);
 	reset();
 };

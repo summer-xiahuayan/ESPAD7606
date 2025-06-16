@@ -68,6 +68,8 @@ void loop()
     Serial.print(i);
     Serial.print(": ");
     Serial.print(voltage, 3); // 保留3位小数
+    Serial.print("RAWDATA:");
+    Serial.print(Data[i]);
     Serial.println(" V");
   }
 
