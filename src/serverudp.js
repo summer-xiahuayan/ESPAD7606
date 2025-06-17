@@ -1,11 +1,11 @@
-const net = require('net');
+const dgram = require('dgram'); // UDP模块
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 const os = require('os');
 
 // 配置参数
-const TCP_PORT = 8081; // ESP32连接的端口
+const UDP_PORT = 8081; // ESP32连接的UDP端口
 const WS_PORT = 1234;  // 网页连接的WebSocket端口
 const DATA_DIR = path.join(__dirname, 'data');
 const CONFIG = {
@@ -18,8 +18,8 @@ if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR);
 }
 
-// 存储当前连接的ESP32客户端和日志文件
-let espClient = null;
+// 存储当前连接的ESP32客户端信息和日志文件
+let espClientInfo = null; // 存储ESP32的IP和端口
 let currentLogStream = null;
 let currentLogFile = null;
 let wsClients = new Set();
@@ -48,57 +48,47 @@ function getSystemEncoding() {
     return platform === 'win32' ? 'gbk' : 'utf8';
 }
 
-// 创建TCP服务器
-const tcpServer = net.createServer((socket) => {
-    // 获取ESP32客户端的IP和端口
-    const clientIp = socket.remoteAddress;
-    const clientPort = socket.remotePort;
+// 创建UDP服务器
+const udpServer = dgram.createSocket('udp4');
 
-    console.log(`ESP32客户端已连接: ${clientIp}:${clientPort}`);
-    if (espClient) espClient.destroy();
-    espClient = socket;
-    broadcastStatus('ESP_CONNECTED');
+udpServer.on('error', (error) => {
+    console.error(`UDP服务器错误: ${error.message}`);
+    udpServer.close();
+});
 
-    socket.on('data', (data) => {
-        try {
-            const dataString = data.toString().trim();
-            const values = dataString.split(',').map(Number);
+udpServer.on('message', (message, rinfo) => {
+    // 存储ESP32客户端信息
+    espClientInfo = rinfo;
+    console.log(`收到ESP32数据 (${rinfo.address}:${rinfo.port})`);
 
-            if (values.length === 8) {
-                const timestamp = generateExcelFriendlyTimestamp();
-                const logLine = `${timestamp}${CONFIG.CSV_DELIMITER}${values.join(CONFIG.CSV_DELIMITER)}\n`;
-                console.log(logLine);
+    try {
+        const dataString = message.toString().trim();
+        const values = dataString.split(',').map(Number);
 
-                if (currentLogStream) {
-                    const systemEncoding = getSystemEncoding();
-                    const encodedData = systemEncoding === 'utf8' ? logLine : iconv.encode(logLine, 'gbk');
-                    currentLogStream.write(encodedData);
-                }
+        if (values.length === 8) {
+            const timestamp = generateExcelFriendlyTimestamp();
+            const logLine = `${timestamp}${CONFIG.CSV_DELIMITER}${values.join(CONFIG.CSV_DELIMITER)}\n`;
+            console.log(logLine);
 
-                broadcastData(values);
-            } else {
-                console.log(`收到格式不正确的数据: ${dataString}`);
+            if (currentLogStream) {
+                const systemEncoding = getSystemEncoding();
+                const encodedData = systemEncoding === 'utf8' ? logLine : iconv.encode(logLine, 'gbk');
+                currentLogStream.write(encodedData);
             }
-        } catch (error) {
-            console.error(`处理数据时出错: ${error.message}`);
-        }
-    });
 
-    socket.on('close', () => {
-        console.log(`ESP32客户端 ${clientIp}:${clientPort} 已断开连接`);
-        if (espClient === socket) {
-            espClient = null;
-            broadcastStatus('WAITING_FOR_ESP');
+            broadcastData(values);
+           // broadcastStatus('ESP_CONNECTED');
+        } else {
+            console.log(`收到格式不正确的数据: ${dataString}`);
         }
-    });
+    } catch (error) {
+        console.error(`处理数据时出错: ${error.message}`);
+    }
+});
 
-    socket.on('error', (error) => {
-        console.error(`ESP32客户端 ${clientIp}:${clientPort} 错误: ${error.message}`);
-        if (espClient === socket) {
-            espClient = null;
-            broadcastStatus('WAITING_FOR_ESP');
-        }
-    });
+udpServer.on('listening', () => {
+    const address = udpServer.address();
+    console.log(`UDP服务器运行在 ${address.address}:${address.port} 端口，等待ESP32连接`);
 });
 
 // 创建WebSocket服务器
@@ -114,13 +104,13 @@ wss.on('connection', (ws, req) => {
     wsClients.add(ws);
 
     // 发送初始状态
-    ws.send(`STATUS:${espClient ? 'ESP_CONNECTED' : 'WAITING_FOR_ESP'}`);
+    ws.send(`STATUS:${espClientInfo ? 'ESP_CONNECTED' : 'WAITING_FOR_ESP'}`);
 
     ws.on('message', (message) => {
         const msg = message.toString().trim();
 
         if (msg === 'GET_STATUS') {
-            ws.send(`STATUS:${espClient ? 'ESP_CONNECTED' : 'WAITING_FOR_ESP'}`);
+            ws.send(`STATUS:${espClientInfo ? 'ESP_CONNECTED' : 'WAITING_FOR_ESP'}`);
         } else if (msg === 'START_LOGGING') {
             startLogging();
         } else if (msg === 'STOP_LOGGING') {
@@ -239,19 +229,13 @@ function disconnectFrontend() {
     console.log('所有前端连接已断开，服务器继续运行');
 }
 
-// 停止服务器（保持不变，用于完全停止服务）
+// 停止服务器
 function stopServer() {
     stopLogging();
 
-    // 关闭ESP客户端连接
-    if (espClient) {
-        espClient.destroy();
-        espClient = null;
-    }
-
-    // 关闭TCP服务器
-    if (tcpServer) {
-        tcpServer.close(() => console.log('TCP服务器已关闭'));
+    // 关闭UDP服务器
+    if (udpServer) {
+        udpServer.close(() => console.log('UDP服务器已关闭'));
     }
 
     // 关闭所有WebSocket客户端并停止WebSocket服务器
@@ -259,21 +243,8 @@ function stopServer() {
     wss.close(() => console.log('WebSocket服务器已关闭'));
 }
 
-// 启动TCP服务器
-tcpServer.listen(TCP_PORT, () => {
-    console.log(`TCP服务器运行在 ${TCP_PORT} 端口，等待ESP32连接`);
-    console.log(`WebSocket服务器运行在 ${WS_PORT} 端口，等待网页连接`);
-    console.log(`数据将存储在 ${DATA_DIR} 目录`);
-});
-
-// 处理错误
-tcpServer.on('error', (error) => {
-    if (error.code === 'EADDRINUSE') {
-        console.error(`端口 ${TCP_PORT} 已被占用`);
-        process.exit(1);
-    }
-    console.error(`TCP服务器错误: ${error.message}`);
-});
+// 启动UDP服务器
+udpServer.bind(UDP_PORT);
 
 // 处理程序退出
 process.on('SIGINT', () => {

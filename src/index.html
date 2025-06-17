@@ -190,9 +190,16 @@
             margin-right: 5px;
             /* 图标与文字间距 */
         }
+
         /* 单独调大电压图标 */
         .header .fa-bolt {
-            font-size: 30px; /* 电压图标尺寸，可按需调整 */
+            font-size: 30px;
+            /* 电压图标尺寸，可按需调整 */
+        }
+
+        /* 通道卡片隐藏样式 */
+        .channel-card.hidden {
+            display: none;
         }
     </style>
 </head>
@@ -201,29 +208,29 @@
     <div class="container">
         <div class="header">
             <h1>ESP_AD7606八通道电压数据监控系统</h1>
-            <!-- <i class="fas fa-bolt"></i> 电压图标 -->
         </div>
 
         <div class="control-panel">
             <div class="control-group">
-                <label for="host"><i class="fas fa-server"></i> 服务器地址:</label> <!-- 服务器图标 -->
+                <label for="host"><i class="fas fa-server"></i> 服务器地址:</label>
                 <input type="text" id="host" value="127.0.0.1">
             </div>
             <div class="control-group">
-                <label for="port"><i class="fas fa-network-wired"></i> 端口号:</label> <!-- 端口图标 -->
+                <label for="port"><i class="fas fa-network-wired"></i> 端口号:</label>
                 <input type="text" id="port" value="1234">
             </div>
             <div class="control-group">
-                <button id="startServerBtn"><i class="fas fa-link"></i> 连接服务器</button> <!-- 连接图标 -->
-                <button id="stopServerBtn" disabled><i class="fa fa-link-slash"></i> 断开服务器</button> <!-- 断开图标 -->
+                <button id="startServerBtn"><i class="fas fa-link"></i> 连接服务器</button>
+                <button id="stopServerBtn" disabled><i class="fa fa-link-slash"></i> 断开服务器</button>
                 <span id="statusIndicator" class="status-indicator offline"></span>
                 <span id="statusText">服务器未连接</span>
             </div>
             <div class="control-group">
-                <button id="startLoggingBtn" disabled><i class="fas fa-file-alt"></i> 开始记录</button> <!-- 文档图标 -->
-                <button id="stopLoggingBtn" disabled><i class="fas fa-stop"></i> 停止记录</button> <!-- 停止图标 -->
-                <button id="downloadCsvBtn" disabled><i class="fas fa-download"></i> 下载CSV</button> <!-- 下载图标 -->
+                <button id="startLoggingBtn" disabled><i class="fas fa-file-alt"></i> 开始记录</button>
+                <button id="stopLoggingBtn" disabled><i class="fas fa-stop"></i> 停止记录</button>
+                <button id="downloadCsvBtn" disabled><i class="fas fa-download"></i> 下载CSV</button>
             </div>
+            
         </div>
 
         <div class="data-display">
@@ -231,7 +238,7 @@
         </div>
 
         <div class="chart-container">
-            <h3><i class="fas fa-chart-line"></i> 电压数据趋势图</h3> <!-- 图表图标 -->
+            <h3><i class="fas fa-chart-line"></i> 电压数据趋势图</h3>
             <div class="chart-wrapper">
                 <canvas id="dataChart"></canvas>
             </div>
@@ -247,10 +254,14 @@
         let isLogging = false;
         let chart = null;
         const channelCount = 8;
-        const channelData = Array(channelCount).fill(0).map(() => []);
-        const maxDataPoints = 100;
+        const maxDataPoints = 100; // 减少数据点数量以提高性能
         let serverStatus = false;
         let currentLogFile = null; // 当前日志文件名
+        const channelVisible = Array(channelCount).fill(true);
+        const channelData = Array(channelCount).fill(0).map(() => []);
+        let updateTimeout = null; // 用于批量更新的超时ID
+        const updateThrottle = 300; // 批量更新间隔(毫秒)
+        let pendingUpdates = []; // 待处理的更新数据
 
         // DOM元素
         const startServerBtn = document.getElementById('startServerBtn');
@@ -262,13 +273,14 @@
         const downloadCsvBtn = document.getElementById('downloadCsvBtn');
         const logContainer = document.getElementById('logContainer');
         const dataDisplay = document.querySelector('.data-display');
-
+      
         // 初始化通道显示卡片
         function initChannelCards() {
             dataDisplay.innerHTML = '';
             for (let i = 0; i < channelCount; i++) {
                 const card = document.createElement('div');
                 card.className = 'channel-card';
+                card.dataset.channel = i; // 添加通道标识
                 card.innerHTML = `
                     <div class="channel-header">
                         <div class="channel-name">通道 ${i + 1}</div>
@@ -297,6 +309,9 @@
                         borderWidth: 1,
                         fill: false,
                         tension: 0.1,
+                        showLine: channelVisible[i], // 根据初始状态设置是否显示线条
+                        pointRadius: 0, // 不显示数据点，减少渲染开销
+                        borderSkipped: false // 确保线条连续
                     }))
                 },
                 options: {
@@ -319,16 +334,31 @@
                     },
                     plugins: {
                         legend: {
-                            labels: { font: { size: 10 } }
+                            labels: {
+                                font: { size: 10 },
+                                onClick: (event, legendItem) => {
+                                    toggleChannelVisibility(legendItem.index);
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
                         }
                     },
                     animation: {
-                        duration: 0
+                        duration: 0 // 关闭动画效果
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
                     }
                 }
             };
 
             chart = new Chart(ctx, config);
+            console.log('图表初始化完成');
         }
 
         // 生成随机颜色
@@ -351,6 +381,12 @@
             const logLine = `<div>[${timestamp}] ${message}</div>`;
             logContainer.innerHTML += logLine;
             logContainer.scrollTop = logContainer.scrollHeight;
+
+            // 限制日志数量，避免DOM过多
+            const logs = logContainer.querySelectorAll('div');
+            if (logs.length > 50) {
+                logContainer.removeChild(logs[0]);
+            }
         }
 
         // 启动服务器
@@ -387,9 +423,12 @@
                             const dataStr = message.substring(5);
                             const data = dataStr.split(',').map(Number);
                             if (data.length === channelCount) {
+                                log(`收到数据: ${data.join(',')}`);
                                 updateDisplay(data);
                             }
-                        }
+                                
+                            }
+                        
                         // 处理服务器状态消息
                         else if (message.startsWith('STATUS:')) {
                             const status = message.substring(7);
@@ -404,6 +443,7 @@
                                 currentLogFile = status.substring(16);
                                 log(`开始记录数据到： ${currentLogFile}`);
                                 downloadCsvBtn.disabled = false;
+                                startLoggingBtn.disabled = true;
                             } else if (status === 'LOGGING_STOPPED') {
                                 log('记录数据已停止');
                                 downloadCsvBtn.disabled = false;
@@ -436,6 +476,9 @@
                     downloadCsvBtn.disabled = true;
                     currentLogFile = null;
                     socket = null;
+                    clearTimeout(updateTimeout);
+                    updateTimeout = null;
+                    pendingUpdates = [];
                 };
 
                 socket.onerror = (error) => {
@@ -444,6 +487,9 @@
                     statusText.textContent = '连接错误';
                     serverStatus = false;
                     socket = null;
+                    clearTimeout(updateTimeout);
+                    updateTimeout = null;
+                    pendingUpdates = [];
                 };
             } catch (error) {
                 log(`错误：无法连接到服务器 - ${error.message}`);
@@ -456,6 +502,9 @@
                 socket.send('STOP_SERVER');
                 socket.close();
             }
+            clearTimeout(updateTimeout);
+            updateTimeout = null;
+            pendingUpdates = [];
         });
 
         // 开始记录数据
@@ -520,52 +569,97 @@
             log(`已下载CSV文件: ${filename}`);
         }
 
-        // 更新显示数据
-        function updateDisplay(data) {
-            for (let i = 0; i < channelCount; i++) {
-                const value = data[i].toFixed(2);
-                document.getElementById(`channelValue${i}`).textContent = value;
-
-                channelData[i].push(data[i]);
-                if (channelData[i].length > maxDataPoints) {
-                    channelData[i].shift();
-                }
-
-                chart.data.datasets[i].data = channelData[i];
+        // 批量处理待更新数据
+        function processPendingUpdates() {
+            if (pendingUpdates.length === 0) {
+                updateTimeout = null;
+                return;
             }
-            chart.update();
+
+            // 合并处理多个更新（只处理最新的更新）
+            const data = pendingUpdates.pop();
+            console.log(`处理数据更新: ${data.join(',')}`);
+            updateDisplay(data);
+            pendingUpdates = []; // 清空待处理队列
+            updateTimeout = null;
         }
 
+        // 更新显示数据
+            function updateDisplay(data) {
+                for (let i = 0; i < channelCount; i++) {
+                    const value = data[i].toFixed(2);
+                    document.getElementById(`channelValue${i}`).textContent = value;
+
+                    // 根据通道可见性显示/隐藏卡片
+                    const channelCard = document.querySelector(`.channel-card[data-channel="${i}"]`);
+                    if (channelCard) {
+                        channelCard.classList.toggle('hidden', !channelVisible[i]);
+                    }
+
+                    channelData[i].push(data[i]);
+                    if (channelData[i].length > maxDataPoints) {
+                        channelData[i].shift();
+                    }
+
+                    chart.data.datasets[i].data = channelData[i];
+                    chart.data.datasets[i].showLine = channelVisible[i]; // 更新线条显示状态
+                }
+                chart.update();
+            }
+
+
+        // 切换通道可见性
+        function toggleChannelVisibility(channelIndex) {
+            // 切换可见性状态
+            channelVisible[channelIndex] = !channelVisible[channelIndex];
+
+            // 更新图表（使用批量更新）
+            chart.data.datasets[channelIndex].showLine = channelVisible[channelIndex];
+            chart.update({ animation: false });
+
+            // 更新通道卡片显示状态
+            const channelCard = document.querySelector(`.channel-card[data-channel="${channelIndex}"]`);
+            if (channelCard) {
+                channelCard.classList.toggle('hidden', !channelVisible[channelIndex]);
+            }
+
+            // 记录操作
+            const status = channelVisible[channelIndex] ? '显示' : '隐藏';
+            log(`${status}通道 ${channelIndex + 1}`);
+        }
+
+       
+
         document.addEventListener('DOMContentLoaded', () => {
-                initChannelCards();
-                initChart();
-                log('系统初始化完成，请连接服务器');
+            initChannelCards();
+            initChart();
+            log('系统初始化完成，请连接服务器');
 
-                // 使用内嵌SVG图标作为favicon（最终方案）
-                setSvgFavicon();
-            });
+            // 使用内嵌SVG图标作为favicon
+            setSvgFavicon();
+        });
 
-            function setSvgFavicon() {
-                // 创建与Font Awesome芯片图标等效的SVG代码
-                const svgCode = `
+        function setSvgFavicon() {
+            // 创建与Font Awesome芯片图标等效的SVG代码
+            const svgCode = `
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16">
-                    <path d="M176 24c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c-35.3 0-64 28.7-64 64l-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0 0 56-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0 0 56-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0c0 35.3 28.7 64 64 64l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40 56 0 0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40 56 0 0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c35.3 0 64-28.7 64-64l40 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-40 0 0-56 40 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-40 0 0-56 40 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-40 0c0-35.3-28.7-64-64-64l0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40-56 0 0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40-56 0 0-40zM160 128l192 0c17.7 0 32 14.3 32 32l0 192c0 17.7-14.3 32-32 32l-192 0c-17.7 0-32-14.3-32-32l0-192c0-17.7 14.3-32 32-32zm192 32l-192 0 0 192 192 0 0-192z"
+                    <path d="M176 24c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c-35.3 0-64 28.7-64 64l-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0 0 56-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0 0 56-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0c0 35.3 28.7 64 64 64l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40 56 0 0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c35.3 0 64-28.7 64-64l40 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-40 0 0-56 40 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-40 0c0-35.3-28.7-64-64-64l0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40-56 0 0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40-56 0 0-40zM160 128l192 0c17.7 0 32 14.3 32 32l0 192c0 17.7-14.3 32-32 32l-192 0c-17.7 0-32-14.3-32-32l0-192c0-17.7 14.3-32 32-32zm192 32l-192 0 0 192 192 0 0-192z"
                     fill="black" stroke="white" stroke-width="2"/>
                 </svg>
             `;
 
-                // 将SVG转换为Data URL格式
-                const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgCode)));
+            // 将SVG转换为Data URL格式
+            const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgCode)));
 
-                // 设置为favicon
-                let link = document.querySelector('link[rel="icon"]');
-                if (!link) {
-                    link = document.createElement('link');
-                    link.rel = 'icon';
-                    document.head.appendChild(link);
-                }
-                link.href = svgDataUrl;
+            // 设置为favicon
+            let link = document.querySelector('link[rel="icon"]');
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
             }
+            link.href = svgDataUrl;
+        }
     </script>
 </body>
 
