@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP_AD7606配置中心</title>
+    <style>
+        /* 基础样式 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 头部样式 */
+        header {
+            
+            background-color: #4a6fa5;
+            font-size: 25px;
+            color: white;
+            padding: 8px;
+            height: 60px;
+            border-radius: 10px;
+            margin-bottom: 1px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+          
+        }
+
+        .header-title {
+            font-size:2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+          
+        }
+
+        .header-icon {
+            margin-right: 0.5rem;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+
+        .status-item {
+            margin-left: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .status-icon {
+            margin-right: 2.5rem;
+            
+        }
+
+        /* 主内容样式 */
+        main {
+            flex-grow: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        /* 状态卡片 */
+        .status-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .status-cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .status-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-icon {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-right: 1rem;
+        }
+
+        .card-icon-blue {
+            background-color: white;
+            color: white;
+        }
+
+        .card-icon-green {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .card-icon-indigo {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+        }
+
+        .card-text {
+            flex-grow: 1;
+        }
+
+        .card-label {
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        .card-value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* 表单样式 */
+        .config-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-section {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: opacity 0.3s;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-icon {
+            padding: 0.5rem;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-grid-3 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.375rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .input-container {
+  position: relative; /* 确保子元素绝对定位相对于此容器 */
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.25rem; /* 固定图标宽度 */
+  height: 1.25rem; /* 固定图标高度 */
+  color: #94a3b8; /* 图标颜色 */
+  pointer-events: none; /* 防止图标阻挡输入框点击 */
+}
+
+.input-with-icon {
+  padding-left: 2.5rem; /* 为图标腾出空间 */
+}
+
+        .help-text {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+        }
+
+       
+
+        /* PWM特定样式 */
+        .pwm-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .pwm-disabled {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+
+        .pwm-active {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .pwm-full {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .duty-cycle-bar {
+            height: 0.5rem;
+            border-radius: 0.25rem;
+            margin-top: 0.25rem;
+            transition: width 0.3s;
+        }
+
+        .duty-cycle-bar-blue {
+            background-color: #3b82f6;
+        }
+
+        .duty-cycle-bar-purple {
+            background-color: #8b5cf6;
+        }
+
+        .phase-marks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        /* 按钮样式 */
+        .submit-button {
+            background:  #4a6fa5;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem auto 0;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-icon {
+            margin-right: 0.5rem;
+        }
+
+        /* 页脚样式 */
+        footer {
+            background-color:  #4a6fa5;
+            color: white;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            margin-top: 2rem;
+        }
+
+        .footer-version {
+            color:  #4a6fa5;
+            margin-top: 0.25rem;
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 自定义图标样式 */
+        .icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            stroke-width: 0;
+            stroke: currentColor;
+            fill: currentColor;
+        }
+
+        /* 模拟Font Awesome图标 */
+        .fa {
+            display: inline-block;
+            font: normal normal normal 14px/1 FontAwesome;
+            font-size: inherit;
+            text-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .fa-wifi:before {
+            content: "📶";
+        }
+
+        .fa-clock-o:before {
+            content: "🕒";
+        }
+
+        .fa-server:before {
+            content: "🖥️";
+        }
+
+        .fa-cog:before {
+            content: "⚙️";
+        }
+
+        .fa-signal:before {
+            content: "📶";
+        }
+
+        .fa-lock:before {
+            content: "🔒";
+        }
+
+        .fa-globe:before {
+            content: "🌍";
+        }
+
+        .fa-plug:before {
+            content: "🔌";
+        }
+
+        .fa-refresh:before {
+            content: "🔄";
+        }
+
+        .fa-tachometer:before {
+            content: "🚗";
+        }
+
+        .fa-sliders:before {
+            content: "🎚️";
+        }
+
+        .fa-circle-o-notch:before {
+            content: "🔄";
+        }
+
+        .fa-save:before {
+            content: "💾";
+        }
+
+        .fa-info-circle:before {
+            content: "ℹ️";
+        }
+
+        .fa-power-off:before {
+            content: "🔌";
+        }
+
+        .fa-microchip:before {
+            content: "💻";
+        }
+        footer {
+  background-color: #4a6fa5; /* 蓝色背景 */
+  color: white; /* 文字白色 */
+  padding: 1rem 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  margin-top: 2rem;
+}
+
+.footer-version {
+  color: rgba(255, 255, 255, 0.8); /* 版本号文字稍浅，增加层次感 */
+}
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <div class="header-title">
+                ESP_AD7606配置中心
+            </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="status-cards">
+            <div class="status-card">
+                <div class="card-icon card-icon-blue">
+                    <span class="status-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                            <path
+                                d="M176 24c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c-35.3 0-64 28.7-64 64l-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0 0 56-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0 0 56-40 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l40 0c0 35.3 28.7 64 64 64l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40 56 0 0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40 56 0 0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c35.3 0 64-28.7 64-64l40 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-40 0 0-56 40 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-40 0 0-56 40 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-40 0c0-35.3-28.7-64-64-64l0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40-56 0 0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40-56 0 0-40zM160 128l192 0c17.7 0 32 14.3 32 32l0 192c0 17.7-14.3 32-32 32l-192 0c-17.7 0-32-14.3-32-32l0-192c0-17.7 14.3-32 32-32zm192 32l-192 0 0 192 192 0 0-192z" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="card-text">
+                    <div class="card-label">ESP状态</div>
+                    <div class="card-value" id="wifi-ssid">未连接</div>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <div class="card-icon card-icon-blue">
+                    <span class="status-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                            <path
+                                d="M64 32C28.7 32 0 60.7 0 96l0 64c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-64c0-35.3-28.7-64-64-64L64 32zm280 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm48 24a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zM64 288c-35.3 0-64 28.7-64 64l0 64c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-64c0-35.3-28.7-64-64-64L64 288zm280 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm56 24a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="card-text">
+                    <div class="card-label">服务器</div>
+                    <div class="card-value" id="server-status">未配置</div>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <div class="card-icon card-icon-blue">
+                    <span class="status-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                            <path
+                                d="M128 64c0-17.7 14.3-32 32-32l160 0c17.7 0 32 14.3 32 32l0 352 96 0 0-160c0-17.7 14.3-32 32-32l128 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-96 0 0 160c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-352-96 0 0 160c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l96 0 0-160z" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="card-text">
+                    <div class="card-label">PWM通道</div>
+                    <div class="card-value" id="pwm-status">0/2 激活</div>
+                </div>
+            </div>
+        </div>
+
+        <form action='/save' method='post' class="config-form">
+            <div class="form-section fade-in">
+                <div class="section-header">
+                    <div class="card-icon card-icon-blue">
+                        <span class="status-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                <path
+                                    d="M54.2 202.9C123.2 136.7 216.8 96 320 96s196.8 40.7 265.8 106.9c12.8 12.2 33 11.8 45.2-.9s11.8-33-.9-45.2C549.7 79.5 440.4 32 320 32S90.3 79.5 9.8 156.7C-2.9 169-3.3 189.2 8.9 202s32.5 13.2 45.2 .9zM320 256c56.8 0 108.6 21.1 148.2 56c13.3 11.7 33.5 10.4 45.2-2.8s10.4-33.5-2.8-45.2C459.8 219.2 393 192 320 192s-139.8 27.2-190.5 72c-13.3 11.7-14.5 31.9-2.8 45.2s31.9 14.5 45.2 2.8c39.5-34.9 91.3-56 148.2-56zm64 160a64 64 0 1 0 -128 0 64 64 0 1 0 128 0z" />
+                            </svg>
+                        </span>
+                        </div>
+                    <h2 class="section-title">WiFi配置</h2>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="ssid" class="form-label">WiFi名称 (SSID)</label>  
+                        <div class="input-container">
+                            <span class="input-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 576 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                    <path
+                                        d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-19.3c-2.7 1.1-5.4 2-8.2 2.7l-60.1 15c-3 .7-6 1.2-9 1.4c-.9 .1-1.8 .2-2.7 .2l-64 0c-6.1 0-11.6-3.4-14.3-8.8l-8.8-17.7c-1.7-3.4-5.1-5.5-8.8-5.5s-7.2 2.1-8.8 5.5l-8.8 17.7c-2.9 5.9-9.2 9.4-15.7 8.8s-12.1-5.1-13.9-11.3L144 381l-9.8 32.8c-6.1 20.3-24.8 34.2-46 34.2L80 448c-8.8 0-16-7.2-16-16s7.2-16 16-16l8.2 0c7.1 0 13.3-4.6 15.3-11.4l14.9-49.5c3.4-11.3 13.8-19.1 25.6-19.1s22.2 7.8 25.6 19.1l11.6 38.6c7.4-6.2 16.8-9.7 26.8-9.7c15.9 0 30.4 9 37.5 23.2l4.4 8.8 8.9 0c-3.1-8.8-3.7-18.4-1.4-27.8l15-60.1c2.8-11.3 8.6-21.5 16.8-29.7L384 203.6l0-43.6-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM549.8 139.7c-15.6-15.6-40.9-15.6-56.6 0l-29.4 29.4 71 71 29.4-29.4c15.6-15.6 15.6-40.9 0-56.6l-14.4-14.4zM311.9 321c-4.1 4.1-7 9.2-8.4 14.9l-15 60.1c-1.4 5.5 .2 11.2 4.2 15.2s9.7 5.6 15.2 4.2l60.1-15c5.6-1.4 10.8-4.3 14.9-8.4L512.1 262.7l-71-71L311.9 321z" />
+                                </svg>
+                            </span>
+                            <input type="text" id="ssid" name="ssid" required class="form-input input-with-icon"
+                                placeholder="输入WiFi名称">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">WiFi密码</label>
+                        <div class="input-container">
+                            <span class="input-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                    <path
+                                        d="M144 144l0 48 160 0 0-48c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192l0-48C80 64.5 144.5 0 224 0s144 64.5 144 144l0 48 16 0c35.3 0 64 28.7 64 64l0 192c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 256c0-35.3 28.7-64 64-64l16 0z" />
+                                </svg>
+                            </span>
+                            <input type="password" id="password" name="password" class="form-input input-with-icon"
+                                placeholder="输入WiFi密码">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section fade-in">
+                <div class="section-header">
+                    <div class="card-icon card-icon-blue">
+                        <span class="status-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                <path
+                                    d="M78.6 5C69.1-2.4 55.6-1.5 47 7L7 47c-8.5 8.5-9.4 22-2.1 31.6l80 104c4.5 5.9 11.6 9.4 19 9.4l54.1 0 109 109c-14.7 29-10 65.4 14.3 89.6l112 112c12.5 12.5 32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3l-112-112c-24.2-24.2-60.6-29-89.6-14.3l-109-109 0-54.1c0-7.5-3.5-14.5-9.4-19L78.6 5zM19.9 396.1C7.2 408.8 0 426.1 0 444.1C0 481.6 30.4 512 67.9 512c18 0 35.3-7.2 48-19.9L233.7 374.3c-7.8-20.9-9-43.6-3.6-65.1l-61.7-61.7L19.9 396.1zM512 144c0-10.5-1.1-20.7-3.2-30.5c-2.4-11.2-16.1-14.1-24.2-6l-63.9 63.9c-3 3-7.1 4.7-11.3 4.7L352 176c-8.8 0-16-7.2-16-16l0-57.4c0-4.2 1.7-8.3 4.7-11.3l63.9-63.9c8.1-8.1 5.2-21.8-6-24.2C388.7 1.1 378.5 0 368 0C288.5 0 224 64.5 224 144l0 .8 85.3 85.3c36-9.1 75.8 .5 104 28.7L429 274.5c49-23 83-72.8 83-130.5zM56 432a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <h2 class="section-title">服务器配置</h2>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="serverIp" class="form-label">服务器IP地址</label>
+                        <div class="input-container">
+                            <span class="input-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                    <path
+                                        d="M64 32C28.7 32 0 60.7 0 96l0 64c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-64c0-35.3-28.7-64-64-64L64 32zm280 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm48 24a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zM64 288c-35.3 0-64 28.7-64 64l0 64c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-64c0-35.3-28.7-64-64-64L64 288zm280 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm56 24a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z" />
+                                </svg>
+                            </span>
+                            <input type="text" id="serverIp" name="serverIp" required class="form-input input-with-icon"
+                                placeholder="例如: 192.168.1.100">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serverPort" class="form-label">服务器端口</label>
+                        <div class="input-container">
+                            <span class="input-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                    <path
+                                        d="M256 64l128 0 0 64-128 0 0-64zM240 0c-26.5 0-48 21.5-48 48l0 96c0 26.5 21.5 48 48 48l48 0 0 32L32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0 0 32-48 0c-26.5 0-48 21.5-48 48l0 96c0 26.5 21.5 48 48 48l160 0c26.5 0 48-21.5 48-48l0-96c0-26.5-21.5-48-48-48l-48 0 0-32 256 0 0 32-48 0c-26.5 0-48 21.5-48 48l0 96c0 26.5 21.5 48 48 48l160 0c26.5 0 48-21.5 48-48l0-96c0-26.5-21.5-48-48-48l-48 0 0-32 96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-256 0 0-32 48 0c26.5 0 48-21.5 48-48l0-96c0-26.5-21.5-48-48-48L240 0zM96 448l0-64 128 0 0 64L96 448zm320-64l128 0 0 64-128 0 0-64z" />
+                                </svg>
+                            </span>
+                            <input type="number" id="serverPort" name="serverPort" required
+                                class="form-input input-with-icon" placeholder="例如: 8080" min="1" max="65535">
+                        </div>
+                    </div>
+
+                    <div class="form-group md:col-span-2">
+                        <label for="udpFrequency" class="form-label">UDP上传频率 (Hz)</label>
+                        <div class="input-container">
+                            <span class="input-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                    <path
+                                        d="M288 109.3L288 352c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-242.7-73.4 73.4c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l128-128c12.5-12.5 32.8-12.5 45.3 0l128 128c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L288 109.3zM64 352l128 0c0 35.3 28.7 64 64 64s64-28.7 64-64l128 0c35.3 0 64 28.7 64 64l0 32c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64l0-32c0-35.3 28.7-64 64-64zM432 456a24 24 0 1 0 0-48 24 24 0 1 0 0 48z" />
+                                </svg>
+                            </span>
+                            <input type="number" id="udpFrequency" name="udpFrequency" min="0.01" max="50" step="0.01"
+                                value="1.0" required class="form-input input-with-icon">
+
+                        </div>
+                        <div class="help-text flex items-center gap-2 text-sm text-gray-700">
+                            <span>频率范围: 0.01-50Hz</span>           
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="form-section fade-in">
+                    <div class="section-header">
+                        <div class="card-icon card-icon-blue">
+                            <span class="status-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                    <path
+                                        d="M128 64c0-17.7 14.3-32 32-32l160 0c17.7 0 32 14.3 32 32l0 352 96 0 0-160c0-17.7 14.3-32 32-32l128 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-96 0 0 160c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-352-96 0 0 160c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l96 0 0-160z" />
+                                </svg>
+                            </span>
+                            </div>
+                        <div class="flex justify-between w-full">
+                            <h2 class="section-title">PWM通道 1 (GPIO<span class="text-primary">)" + String(RELAY1_PIN) +
+                                    R"(</span>)</h2>
+                            <div class="pwm-status pwm-disabled" id="pwm1-status">已禁用</div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid form-grid-3">
+                        <div class="form-group">
+                            <label for="pwmFrequency1" class="form-label">频率 (Hz)</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                        <path
+                                            d="M0 224c0 17.7 14.3 32 32 32s32-14.3 32-32c0-53 43-96 96-96l160 0 0 32c0 12.9 7.8 24.6 19.8 29.6s25.7 2.2 34.9-6.9l64-64c12.5-12.5 12.5-32.8 0-45.3l-64-64c-9.2-9.2-22.9-11.9-34.9-6.9S320 19.1 320 32l0 32L160 64C71.6 64 0 135.6 0 224zm512 64c0-17.7-14.3-32-32-32s-32 14.3-32 32c0 53-43 96-96 96l-160 0 0-32c0-12.9-7.8-24.6-19.8-29.6s-25.7-2.2-34.9 6.9l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c9.2 9.2 22.9 11.9 34.9 6.9s19.8-16.6 19.8-29.6l0-32 160 0c88.4 0 160-71.6 160-160z" />
+                                    </svg>
+                                    </span>
+                                <input type="number" id="pwmFrequency1" name="pwmFrequency1" min="0.01" max="50"
+                                    step="0.01" value="1.0" required class="form-input input-with-icon">
+                                    
+                            </div>
+                            <div class="help-text">
+                                <span>频率范围: 0.01-50Hz</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pwmDutyCycle1" class="form-label">占空比 (%)</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 384 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                        <path
+                                            d="M374.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-320 320c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l320-320zM128 128A64 64 0 1 0 0 128a64 64 0 1 0 128 0zM384 384a64 64 0 1 0 -128 0 64 64 0 1 0 128 0z" />
+                                    </svg>
+                                    </span>
+                                <input type="number" id="pwmDutyCycle1" name="pwmDutyCycle1" min="0" max="100"
+                                    step="0.1" value="0.0" required class="form-input input-with-icon">
+                            </div>
+                            <div class="duty-cycle-bar duty-cycle-bar-blue" id="duty-cycle-bar1" style="width: 0%">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pwmPhase1" class="form-label">相位 (度)</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                        <path
+                                            d="M169.7 .9c-22.8-1.6-41.9 14-47.5 34.7L110.4 80c.5 0 1.1 0 1.6 0c176.7 0 320 143.3 320 320c0 .5 0 1.1 0 1.6l44.4-11.8c20.8-5.5 36.3-24.7 34.7-47.5C498.5 159.5 352.5 13.5 169.7 .9zM399.8 410.2c.1-3.4 .2-6.8 .2-10.2c0-159.1-128.9-288-288-288c-3.4 0-6.8 .1-10.2 .2L.5 491.9c-1.5 5.5 .1 11.4 4.1 15.4s9.9 5.6 15.4 4.1L399.8 410.2zM176 208a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm64 128a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zM96 384a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z" />
+                                    </svg>
+                                    </span>
+                                <input type="number" id="pwmPhase1" name="pwmPhase1" min="0" max="360" step="1"
+                                    value="0.0" required class="form-input input-with-icon">
+                            </div>
+                            <div class="phase-marks">
+                                <span>0°</span>
+                                <span>180°</span>
+                                <span>360°</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in">
+                    <div class="section-header">
+                        <div class="card-icon card-icon-blue">
+                            <span class="status-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                    <path
+                                        d="M128 64c0-17.7 14.3-32 32-32l160 0c17.7 0 32 14.3 32 32l0 352 96 0 0-160c0-17.7 14.3-32 32-32l128 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-96 0 0 160c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-352-96 0 0 160c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l96 0 0-160z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="flex justify-between w-full">
+                            <h2 class="section-title">PWM通道 2 (GPIO<span class="text-primary">)" + String(RELAY2_PIN) +
+                                    R"(</span>)</h2>
+                            <div class="pwm-status pwm-disabled" id="pwm2-status">已禁用</div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid form-grid-3">
+                        <div class="form-group">
+                            <label for="pwmFrequency2" class="form-label">频率 (Hz)</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                        <path
+                                            d="M0 224c0 17.7 14.3 32 32 32s32-14.3 32-32c0-53 43-96 96-96l160 0 0 32c0 12.9 7.8 24.6 19.8 29.6s25.7 2.2 34.9-6.9l64-64c12.5-12.5 12.5-32.8 0-45.3l-64-64c-9.2-9.2-22.9-11.9-34.9-6.9S320 19.1 320 32l0 32L160 64C71.6 64 0 135.6 0 224zm512 64c0-17.7-14.3-32-32-32s-32 14.3-32 32c0 53-43 96-96 96l-160 0 0-32c0-12.9-7.8-24.6-19.8-29.6s-25.7-2.2-34.9 6.9l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c9.2 9.2 22.9 11.9 34.9 6.9s19.8-16.6 19.8-29.6l0-32 160 0c88.4 0 160-71.6 160-160z" />
+                                    </svg>
+                                    </span>
+                                <input type="number" id="pwmFrequency2" name="pwmFrequency2" min="0.01" max="50"
+                                    step="0.01" value="1.0" required class="form-input input-with-icon">
+                            </div>
+                            <div class="help-text">
+                                <span>频率范围: 0.01-50Hz</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pwmDutyCycle2" class="form-label">占空比 (%)</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 384 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                        <path
+                                            d="M374.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-320 320c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l320-320zM128 128A64 64 0 1 0 0 128a64 64 0 1 0 128 0zM384 384a64 64 0 1 0 -128 0 64 64 0 1 0 128 0z" />
+                                    </svg>
+                                    </span>
+                                <input type="number" id="pwmDutyCycle2" name="pwmDutyCycle2" min="0" max="100"
+                                    step="0.1" value="0.0" required class="form-input input-with-icon">
+                            </div>
+                            <div class="duty-cycle-bar duty-cycle-bar-purple" id="duty-cycle-bar2" style="width: 0%">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pwmPhase2" class="form-label">相位 (度)</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+                                        <path
+                                            d="M169.7 .9c-22.8-1.6-41.9 14-47.5 34.7L110.4 80c.5 0 1.1 0 1.6 0c176.7 0 320 143.3 320 320c0 .5 0 1.1 0 1.6l44.4-11.8c20.8-5.5 36.3-24.7 34.7-47.5C498.5 159.5 352.5 13.5 169.7 .9zM399.8 410.2c.1-3.4 .2-6.8 .2-10.2c0-159.1-128.9-288-288-288c-3.4 0-6.8 .1-10.2 .2L.5 491.9c-1.5 5.5 .1 11.4 4.1 15.4s9.9 5.6 15.4 4.1L399.8 410.2zM176 208a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm64 128a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zM96 384a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z" />
+                                    </svg>
+                                    </span>
+                                <input type="number" id="pwmPhase2" name="pwmPhase2" min="0" max="360" step="1"
+                                    value="180.0" required class="form-input input-with-icon">
+                            </div>
+                            <div class="phase-marks">
+                                <span>0°</span>
+                                <span>180°</span>
+                                <span>360°</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-button">
+                保存配置
+            </button>
+        </form>
+    </main>
+
+    <footer>
+        <p>ESP_AD7606数据采集系统 &copy; 2025</p>
+        <p class="footer-version" >Version:v1.0.0       Copyright@SUMMER</p>
+    </footer>
+
+    <script>
+        // 更新占空比进度条
+        document.getElementById('pwmDutyCycle1').addEventListener('input', function () {
+            document.getElementById('duty-cycle-bar1').style.width = this.value + '%';
+            updatePwmStatus(1);
+        });
+
+        document.getElementById('pwmDutyCycle2').addEventListener('input', function () {
+            document.getElementById('duty-cycle-bar2').style.width = this.value + '%';
+            updatePwmStatus(2);
+        });
+
+        // 更新PWM状态显示
+        function updatePwmStatus(channel) {
+            const dutyCycle = parseFloat(document.getElementById(`pwmDutyCycle${channel}`).value);
+            const statusElement = document.getElementById(`pwm${channel}-status`);
+
+            if (dutyCycle > 0 && dutyCycle < 100) {
+                statusElement.textContent = 'PWM模式';
+                statusElement.className = 'pwm-status pwm-active';
+            } else if (dutyCycle >= 100) {
+                statusElement.textContent = '持续开启';
+                statusElement.className = 'pwm-status pwm-full';
+            } else {
+                statusElement.textContent = '已禁用';
+                statusElement.className = 'pwm-status pwm-disabled';
+            }
+
+            // 更新总PWM状态
+            updateOverallPwmStatus();
+        }
+
+        // 更新总PWM状态
+        function updateOverallPwmStatus() {
+            const dutyCycle1 = parseFloat(document.getElementById('pwmDutyCycle1').value);
+            const dutyCycle2 = parseFloat(document.getElementById('pwmDutyCycle2').value);
+            const activeChannels = (dutyCycle1 > 0 ? 1 : 0) + (dutyCycle2 > 0 ? 1 : 0);
+
+            document.getElementById('pwm-status').textContent = `${activeChannels}/2 激活`;
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', function () {
+            setSvgFavicon();
+            // 初始化占空比进度条
+            document.getElementById('duty-cycle-bar1').style.width = document.getElementById('pwmDutyCycle1').value + '%';
+            document.getElementById('duty-cycle-bar2').style.width = document.getElementById('pwmDutyCycle2').value + '%';
+
+            // 初始化PWM状态
+            updatePwmStatus(1);
+            updatePwmStatus(2);
+
+            // 模拟WiFi状态
+            setTimeout(function () {
+                document.getElementById('wifi-status').textContent = '已连接';
+                document.getElementById('wifi-ssid').textContent = 'ESP32-AP';
+                document.getElementById('server-status').textContent = '已配置';
+            }, 1000);
+
+            // 更新时间
+            function updateTime() {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds}`;
+            }
+
+            updateTime();
+            setInterval(updateTime, 1000);
+             // 使用内嵌SVG图标作为favicon
+            
+
+            // 添加淡入动画
+            setTimeout(function () {
+                const sections = document.querySelectorAll('.fade-in');
+                sections.forEach((section, index) => {
+                    setTimeout(() => {
+                        section.style.opacity = '1';
+                    }, 100 * index);
+                });
+            }, 100);
+        });
+
+        function setSvgFavicon() {
+                // 创建与Font Awesome芯片图标等效的SVG代码
+                const svgCode =`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160z"/></svg>
+            `;
+
+                // 将SVG转换为Data URL格式
+                const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgCode)));
+
+                // 设置为favicon
+                let link = document.querySelector('link[rel="icon"]');
+                if (!link) {
+                    link = document.createElement('link');
+                    link.rel = 'icon';
+                    document.head.appendChild(link);
+                }
+                link.href = svgDataUrl;
+            };
+    </script>
+</body>
+
+</html>

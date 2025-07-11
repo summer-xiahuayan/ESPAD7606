@@ -36,7 +36,6 @@ void AD7606::pulse(uint8_t pin1, uint8_t pin2)
 {
 	digitalWrite(pin1, HIGH);
 	digitalWrite(pin2, HIGH);
-	delayMicroseconds(1); // 确保CONVST脉冲宽度足够
 	digitalWrite(pin1, LOW);
 	digitalWrite(pin2, LOW);
 }
@@ -180,7 +179,7 @@ AD7606_ESPI::AD7606_ESPI(int DB7, int DB8, int RD, int CS, int CONVSTA, int CONV
 	digitalWrite(_RD, 1);
 	reset();
 };
-[[deprecated(" Use AD7606_ESPI insted ")]]
+[[deprecated( "Use AD7606_ESPI insted" )]]
 AD7606_Serial::AD7606_Serial(int DB7, int DB8, int RD, int CS, int CONVSTA, int CONVSTB, int BUSY, int RESET)
 {
 	_RESET = RESET;
@@ -206,7 +205,7 @@ AD7606_Serial::AD7606_Serial(int DB7, int DB8, int RD, int CS, int CONVSTA, int 
 	digitalWrite(_RD, 1);
 	reset();
 };
-[[deprecated(" Use AD7606_ESPI insted ")]]
+[[deprecated( "Use AD7606_ESPI insted" )]]
 AD7606_Serial::AD7606_Serial(int DB7, int DB8, int RD, int CS, int CONVSTA, int CONVSTB, int BUSY, int RESET,int RANGE)
 {
 	_RESET = RESET;
@@ -234,7 +233,7 @@ AD7606_Serial::AD7606_Serial(int DB7, int DB8, int RD, int CS, int CONVSTA, int 
 	digitalWrite(_RD, 1);
 	reset();
 };
-[[deprecated(" Use AD7606_ESPI insted ")]]
+[[deprecated( "Use AD7606_ESPI insted" )]]
 AD7606_Serial::AD7606_Serial(int DB7, int DB8, int RD, int CS, int CONVSTA, int CONVSTB, int BUSY, int RESET,int OS0,int OS1,int OS2)
 {
 	_RESET = RESET;
@@ -266,7 +265,7 @@ AD7606_Serial::AD7606_Serial(int DB7, int DB8, int RD, int CS, int CONVSTA, int 
 	digitalWrite(_RD, 1);
 	reset();
 };
-[[deprecated(" Use AD7606_ESPI insted ")]]
+[[deprecated( "Use AD7606_ESPI insted" )]]
 AD7606_Serial::AD7606_Serial(int DB7, int DB8, int RD, int CS, int CONVSTA, int CONVSTB, int BUSY, int RESET,int OS0,int OS1,int OS2,int RANGE)
 {
 	_RESET = RESET;
@@ -334,7 +333,8 @@ void AD7606_ESPI::read(int16_t *rawDataBuffer)
 void AD7606_ESPI::read(int16_t *rawDataBuffer,uint8_t times)
 {
 	times > 4 ? times = 4 : times;
-	
+	uint16_t value1 = 0;
+	uint16_t value2 = 0;
 	
 	digitalWrite(_CS, 0); // Enable DOUTA/DOUTB lines and shift-out the conversion results
 
@@ -347,11 +347,8 @@ void AD7606_ESPI::read(int16_t *rawDataBuffer,uint8_t times)
 
 	for (uint8_t k = 0; k < times; k++)
 	{
-		uint16_t value1 = 0;
-		uint16_t value2 = 0;
 		for (int8_t i = 15; i >= 0; i--)
 		{
-			
 			ipulse(_RD);
 			value1 += digitalRead(_DB7) << i;
 			value2 += digitalRead(_DB8) << i;
@@ -911,9 +908,9 @@ AD7606_SPI::AD7606_SPI(int MISO, int SCK, int CS, int CONVSTA, int CONVSTB, int 
 	digitalWrite(_CONVSTB, 0);
 	digitalWrite(_RESET, 0);
 	SPI.begin(SCK,MISO,MOSI,CS);
-	SPI.setBitOrder(SPI_MSBFIRST);
-	SPI.setClockDivider(SPI_CLOCK_DIV128);
-	SPI.setDataMode(SPI_MODE0);
+  	SPI.setBitOrder(SPI_MSBFIRST);
+  	SPI.setClockDivider(0x2000);
+  	SPI.setDataMode(SPI_MODE3);
 	reset();
 };
 
@@ -942,7 +939,7 @@ void AD7606_SPI::read(int16_t *rawDataBuffer,uint8_t times)
 	
 	times > 8 ? times = 8 : times; // save some uSecunds 
 
-	while (digitalRead(_BUSY)==HIGH)
+	while (digitalRead(_BUSY))
 	{
 		//  wait for conversions to be completed (low level on BUSY)
 	}

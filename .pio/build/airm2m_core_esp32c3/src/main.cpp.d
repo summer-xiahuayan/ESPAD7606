@@ -1,7 +1,5 @@
 .pio/build/airm2m_core_esp32c3/src/main.cpp.o: src/main.cpp \
- .pio/libdeps/airm2m_core_esp32c3/AD7606\ -\ Dev/AD7606.cpp \
- .pio/libdeps/airm2m_core_esp32c3/AD7606\ -\ Dev/AD7606.h \
- C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/arduino.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include/freertos/FreeRTOS.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include/esp_additions/freertos/FreeRTOSConfig.h \
@@ -154,7 +152,6 @@
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_netif/include/esp_netif_sta_list.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/USBCDC.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/Esp.h \
- C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/spi_flash/include/esp_partition.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/spi_flash/include/esp_flash.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/hal/include/hal/spi_flash_types.h \
@@ -164,5 +161,62 @@
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFi.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/IPv6Address.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiType.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiSTA.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiGeneric.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_wifi/include/esp_smartconfig.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/wifi_provisioning/include/wifi_provisioning/manager.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/protocomm/include/common/protocomm.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/protocomm/include/security/protocomm_security.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/wifi_provisioning/include/wifi_provisioning/wifi_config.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiAP.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiScan.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiClient.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/Client.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiServer.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/Server.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiUdp.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/Udp.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/cbuf.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src/WebServer.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src/HTTP_Method.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/nghttp/port/include/http_parser.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src/Uri.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src/detail/RequestHandler.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/nvs_flash/include/nvs_flash.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/nvs_flash/include/nvs.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src/Preferences.h \
+ .pio/libdeps/airm2m_core_esp32c3/ArduinoJson/src/ArduinoJson.h \
+ .pio/libdeps/airm2m_core_esp32c3/ArduinoJson/src/ArduinoJson.hpp \
+ .pio/libdeps/airm2m_core_esp32c3/ArduinoJson/src/ArduinoJson/Configuration.hpp \
  C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
- C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/sockets.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/newlib/platform_include/sys/poll.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/netif.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/pbuf.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/stats.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/mem.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/memp.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/priv/memp_std.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/priv/memp_priv.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/priv/mem_priv.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/inet.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/lwip/lwip/src/include/lwip/errno.h \
+ .pio/libdeps/airm2m_core_esp32c3/AD7606\ -\ Dev/AD7606.cpp \
+ .pio/libdeps/airm2m_core_esp32c3/AD7606\ -\ Dev/AD7606.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/cores/esp32/arduino.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/driver/include/driver/timer.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/include/soc/timer_periph.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/esp32c3/include/soc/timer_group_reg.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/esp32c3/include/soc/timer_group_struct.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/esp32c3/include/soc/periph_defs.h \
+ C:/Users/xhy/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/hal/include/hal/timer_types.h \
+ .pio/libdeps/airm2m_core_esp32c3/ESP8266\ and\ ESP32\ OLED\ driver\ for\ SSD1306\ displays/src/SH1106Wire.h \
+ .pio/libdeps/airm2m_core_esp32c3/ESP8266\ and\ ESP32\ OLED\ driver\ for\ SSD1306\ displays/src/OLEDDisplay.h \
+ .pio/libdeps/airm2m_core_esp32c3/ESP8266\ and\ ESP32\ OLED\ driver\ for\ SSD1306\ displays/src/OLEDDisplayFonts.h
